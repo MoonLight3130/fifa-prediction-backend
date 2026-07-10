@@ -173,19 +173,54 @@ export const getMe = asyncHandler(async (req, res) => {
 
 /**
  * PUT /api/auth/me
- * Updates the currently authenticated user's profile.
+ * Updates the currently authenticated user's profile (fullName and/or rollNumber).
  */
 export const updateMe = asyncHandler(async (req, res) => {
-  const { fullName } = req.body
+  const { fullName, rollNumber } = req.body
 
-  if (!fullName || fullName.trim() === '') {
-    return res.status(400).json({
-      success: false,
-      message: 'Full Name cannot be empty.',
-    })
+  // Validate fullName if provided
+  if (fullName !== undefined) {
+    if (!fullName || fullName.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Full Name cannot be empty.',
+      })
+    }
+    req.user.fullName = fullName.trim()
   }
 
-  req.user.fullName = fullName.trim()
+  // Validate and update rollNumber if provided
+  if (rollNumber !== undefined) {
+    const newRoll = rollNumber.trim().toUpperCase()
+
+    if (!newRoll) {
+      return res.status(400).json({
+        success: false,
+        message: 'KTU ID cannot be empty.',
+      })
+    }
+
+    // Basic KTU ID format check (alphanumeric, at least 5 chars)
+    if (!/^[A-Z0-9]{5,20}$/.test(newRoll)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid KTU ID format. Use only letters and numbers (5–20 characters).',
+      })
+    }
+
+    // Check it's not already taken by another user
+    if (newRoll !== req.user.rollNumber) {
+      const existing = await User.findOne({ rollNumber: newRoll })
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: 'This KTU ID is already registered to another account.',
+        })
+      }
+      req.user.rollNumber = newRoll
+    }
+  }
+
   await req.user.save()
 
   return res.status(200).json({
