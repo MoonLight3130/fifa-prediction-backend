@@ -1,12 +1,12 @@
 import express from 'express'
 import { body } from 'express-validator'
-import { getMe, login, register } from '../controllers/authController.js'
+import { getMe, login, register, updateMe } from '../controllers/authController.js'
 import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
 const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'ME', 'CE', 'AI', 'IT', 'MCA', 'MBA', 'Other']
-const SEMESTERS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']
+const SEMESTERS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'FACULTY']
 
 const registerValidation = [
   body('fullName')
@@ -30,7 +30,7 @@ const registerValidation = [
     .notEmpty()
     .withMessage('Semester is required.')
     .isIn(SEMESTERS)
-    .withMessage('Semester must be S1 through S8.'),
+    .withMessage('Semester must be S1 through S8, or Faculty.'),
   body('password')
     .notEmpty()
     .withMessage('Password is required.')
@@ -51,5 +51,6 @@ const loginValidation = [
 router.post('/register', registerValidation, register)
 router.post('/login', loginValidation, login)
 router.get('/me', protect, getMe)
+router.put('/me', protect, updateMe)
 
 export default router

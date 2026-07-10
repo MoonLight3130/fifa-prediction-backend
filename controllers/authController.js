@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { recalculateLeaderboard } from '../services/scoringService.js'
 
 const DEPARTMENTS = ['CSE', 'ECE', 'EEE', 'ME', 'CE', 'AI', 'IT', 'MCA', 'MBA', 'Other']
-const SEMESTERS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']
+const SEMESTERS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'FACULTY']
 
 /** Development-only admin credentials */
 const DEV_ADMIN_ROLL = 'MEK23CS024'
@@ -70,7 +70,7 @@ export const register = asyncHandler(async (req, res) => {
   if (!SEMESTERS.includes(semester)) {
     return res.status(400).json({
       success: false,
-      message: 'Invalid semester. Use S1 through S8.',
+      message: 'Invalid semester. Use S1 through S8, or Faculty.',
     })
   }
 
@@ -167,6 +167,30 @@ export const login = asyncHandler(async (req, res) => {
 export const getMe = asyncHandler(async (req, res) => {
   return res.status(200).json({
     success: true,
+    user: formatUser(req.user),
+  })
+})
+
+/**
+ * PUT /api/auth/me
+ * Updates the currently authenticated user's profile.
+ */
+export const updateMe = asyncHandler(async (req, res) => {
+  const { fullName } = req.body
+
+  if (!fullName || fullName.trim() === '') {
+    return res.status(400).json({
+      success: false,
+      message: 'Full Name cannot be empty.',
+    })
+  }
+
+  req.user.fullName = fullName.trim()
+  await req.user.save()
+
+  return res.status(200).json({
+    success: true,
+    message: 'Profile updated successfully',
     user: formatUser(req.user),
   })
 })
